@@ -32,7 +32,7 @@ class PrefixSumScheduler(numbers: Array[Int]) extends Scheduler {
     
     def generateTask(wi: PrefixSumState#WorkItem, offer: Offer): TaskInfo = {
       val command = CommandInfo.newBuilder.setValue(generateCommand(wi)).build()
-      val id = TaskID.newBuilder.setValue("task" + System.currentTimeMillis())
+      val id = TaskID.newBuilder.setValue("task" + System.currentTimeMillis() + "-" + wi.id)
       val name = s"SleepTask-${id.getValue}"
       val slaveId = offer.getSlaveId
       val cpu = Resource.newBuilder
