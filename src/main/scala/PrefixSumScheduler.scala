@@ -54,7 +54,7 @@ class PrefixSumScheduler(numbers: Array[Int]) extends Scheduler {
   }
 
   override def statusUpdate(driver: SchedulerDriver, status: TaskStatus): Unit = {
-   if (status.getState == Protos.TaskState.TASK_FAILED) {
+   if (status.getState == Protos.TaskState.TASK_FAILED || status.getState == Protos.TaskState.TASK_FINISHED) {
       val taskId = status.getTaskId.getValue
       val workId = _workIds.remove(taskId).get
       val result = parseResult(status.getMessage)
