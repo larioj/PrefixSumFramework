@@ -10,14 +10,57 @@ import scala.collection.mutable
   * Created by Jesus E. Larios Murillo on 6/24/16.
   */
 class PrefixSumScheduler(numbers: Array[Int]) extends Scheduler {
+  
+  private val _cpuPerTask = 0.1
+  private val _memPerTask = 32
+  private val _sumState = PrefixSumState(numbers)
+  private val _workIds = mutable.Map[String, Int]()
 
-  val _sumState = PrefixSumState(numbers)
-  val _workIds = mutable.Map[String, Int]()
 
-  def generateCommand(wi: PrefixSumState#WorkItem): String = "exit $((" + s" ${wi.x} + ${wi.y} ))"
-  def parseResult(result: String): Int = {
-    val num = result.substring(result.lastIndexOf(' ') + 1).trim
-    num.toInt
+  private def getCpuCount(offer: Offer): Double = {
+    val cpus = offer.getResourcesList.asScala.filter(_.getName == "cpus")
+    assert(cpus.length == 1)
+    val cpuCount = cpus.head.getScalar.getValue
+    cpuCount
+  }
+
+  private def getTasks(offer: Offer): List[TaskInfo] = {
+    
+    def generateCommand(wi: PrefixSumState#WorkItem): String = "exit $((" + s" ${wi.x} + ${wi.y} ))"
+    
+    def maxNumTasks(): Int = (getCpuCount(offer) / _cpuPerTask).toInt
+    
+    def generateTask(wi: PrefixSumState#WorkItem, offer: Offer): TaskInfo = {
+      val command = CommandInfo.newBuilder.setValue(generateCommand(wi)).build()
+      val id = TaskID.newBuilder.setValue("task" + System.currentTimeMillis())
+      val name = s"SleepTask-${id.getValue}"
+      val slaveId = offer.getSlaveId
+      val cpu = Resource.newBuilder
+        .setName("cpus")
+        .setType(Value.Type.SCALAR)
+        .setScalar(Value.Scalar.newBuilder.setValue(_cpuPerTask))
+      val mem = Resource.newBuilder
+        .setName("mem")
+        .setType(Value.Type.SCALAR)
+        .setScalar(Value.Scalar.newBuilder.setValue(_memPerTask))
+
+      val task = TaskInfo.newBuilder
+        .setCommand(command)
+        .setName(name)
+        .setTaskId(id)
+        .setSlaveId(slaveId)
+        .addResources(cpu)
+        .addResources(mem)
+        .build()
+
+      _workIds(id.getValue) = wi.id // updates state
+
+      task
+    }
+    
+    def workItems = (1 to maxNumTasks()).map(_ => _sumState.nextWorkItemOption()).filter(_.isDefined)
+    
+    workItems.map(wi => generateTask(wi.get, offer)).toList
   }
 
   override def resourceOffers(driver: SchedulerDriver, offers: util.List[Offer]): Unit = {
@@ -26,26 +69,9 @@ class PrefixSumScheduler(numbers: Array[Int]) extends Scheduler {
       println(s"\tresource offer ${offer.getId.getValue}")
 
       if (_sumState.hasWork) {
-        val wi = _sumState.nextWorkItem()
-
-        val command = CommandInfo.newBuilder.setValue(generateCommand(wi)).build()
-        val id = TaskID.newBuilder.setValue("task" + System.currentTimeMillis())
-        val name = s"SleepTask-${id.getValue}"
-        val slaveId = offer.getSlaveId
-        val cpu = Resource.newBuilder.setName("cpus").setType(Value.Type.SCALAR).setScalar(Value.Scalar.newBuilder.setValue(0.1))
-        val mem = Resource.newBuilder.setName("mem").setType(Value.Type.SCALAR).setScalar(Value.Scalar.newBuilder.setValue(64))
-
-        val task = TaskInfo.newBuilder
-          .setCommand(command)
-          .setName(name)
-          .setTaskId(id)
-          .setSlaveId(slaveId)
-          .addResources(cpu)
-          .addResources(mem)
-          .build()
-
-        _workIds(id.getValue) = wi.id
-        driver.launchTasks(List(offer.getId).asJava, List(task).asJava)
+        val tasks = getTasks(offer)
+        println(s"\t launching ${tasks.length} tasks on ${getCpuCount(offer)} cpu")
+        driver.launchTasks(List(offer.getId).asJava, tasks.asJava)
       } else  {
         println(s"\t no work available")
         driver.declineOffer(offer.getId)
@@ -54,6 +80,11 @@ class PrefixSumScheduler(numbers: Array[Int]) extends Scheduler {
   }
 
   override def statusUpdate(driver: SchedulerDriver, status: TaskStatus): Unit = {
+    def parseResult(result: String): Int = {
+      val num = result.substring(result.lastIndexOf(' ') + 1).trim
+      num.toInt
+    }
+
    if (status.getState == Protos.TaskState.TASK_FAILED || status.getState == Protos.TaskState.TASK_FINISHED) {
       val taskId = status.getTaskId.getValue
       val workId = _workIds.remove(taskId).get
