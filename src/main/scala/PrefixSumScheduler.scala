@@ -44,7 +44,7 @@ class PrefixSumScheduler(numbers: Array[Int]) extends Scheduler {
           .addResources(mem)
           .build()
 
-        _workIds(offer.getId.getValue) = wi.id
+        _workIds(id.getValue) = wi.id
         driver.launchTasks(List(offer.getId).asJava, List(task).asJava)
       } else  {
         println(s"\t no work available")
