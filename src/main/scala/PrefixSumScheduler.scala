@@ -33,7 +33,7 @@ class PrefixSumScheduler(numbers: Array[Int]) extends Scheduler {
         val name = s"SleepTask-${id.getValue}"
         val slaveId = offer.getSlaveId
         val cpu = Resource.newBuilder.setName("cpus").setType(Value.Type.SCALAR).setScalar(Value.Scalar.newBuilder.setValue(1.0))
-        val mem = Resource.newBuilder.setName("mem").setType(Value.Type.SCALAR).setScalar(Value.Scalar.newBuilder.setValue(16))
+        val mem = Resource.newBuilder.setName("mem").setType(Value.Type.SCALAR).setScalar(Value.Scalar.newBuilder.setValue(64))
 
         val task = TaskInfo.newBuilder
           .setCommand(command)
