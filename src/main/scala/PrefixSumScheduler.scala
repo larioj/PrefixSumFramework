@@ -12,9 +12,9 @@ import scala.collection.mutable
   * Created by Jesus E. Larios Murillo on 6/24/16.
   */
 class PrefixSumScheduler(numbers: Array[Int], executor: ExecutorInfo) extends Scheduler {
-  
-  private val _cpuPerTask = 0.1
-  private val _memPerTask = 32
+
+  private val _cpuPerTask = 1.0
+  private val _memPerTask = 1024.0
   private val _sumState = PrefixSumState(numbers)
   private val _workIds = mutable.Map[String, Int]()
 

@@ -18,7 +18,7 @@ object PrefixSum {
       .build()
     val executorId = ExecutorID.newBuilder.setValue("PrefixExecutor-" + System.currentTimeMillis())
     val executorName = "Prefix Executor"
-    val source = "java"
+    val source = "PrefixExecutor"
 
 
     val executor = ExecutorInfo.newBuilder
