@@ -1,5 +1,4 @@
 import org.apache.mesos.MesosSchedulerDriver
-import org.apache.mesos.Protos.ResourceUsage.Executor
 import org.apache.mesos.Protos._
 
 /**
@@ -15,16 +14,18 @@ object PrefixSum {
     val id = FrameworkID.newBuilder.setValue(name).build()
 
     val executorCommand = CommandInfo.newBuilder
-      .setValue("PrefixExecutor")
+      .setValue("java -cp /home/vagrant/PrefixSumFramework/target/scala-2.11/PrefixSumFramework-assembly-1.0.jar PrefixSumExecutor")
       .build()
     val executorId = ExecutorID.newBuilder.setValue("PrefixExecutor-" + System.currentTimeMillis())
     val executorName = "Prefix Executor"
+    val source = "java"
 
 
     val executor = ExecutorInfo.newBuilder
       .setCommand(executorCommand)
       .setExecutorId(executorId)
       .setName(executorName)
+      .setSource(source)
       .build()
 
     val scheduler = new PrefixSumScheduler((1 to 128).toArray, executor)

@@ -27,23 +27,29 @@ class PrefixSumExecutor extends Executor {
   override def launchTask(driver: ExecutorDriver, task: TaskInfo): Unit = {
     print(
       s"""
-        |Launch Task: ${task.getTaskId.getValue}
+         |Launch Task: ${task.getTaskId.getValue}
       """.stripMargin)
 
-    driver.sendStatusUpdate(TaskStatus.newBuilder
-      .setTaskId(task.getTaskId)
-      .setState(TaskState.TASK_RUNNING).build())
+    val thread = new Thread {
+      override def run(): Unit = {
+        driver.sendStatusUpdate(TaskStatus.newBuilder
+          .setTaskId(task.getTaskId)
+          .setState(TaskState.TASK_RUNNING).build())
 
-    val data: ByteString = task.getData
-    val x = data.asReadOnlyByteBuffer().getInt(0)
-    val y = data.asReadOnlyByteBuffer().getInt(4)
-    val result = ByteString.copyFrom(ByteBuffer.allocate(4).putInt(x + y))
+        val data: ByteString = task.getData
+        val x = data.asReadOnlyByteBuffer().getInt(0)
+        val y = data.asReadOnlyByteBuffer().getInt(4)
+        val result = ByteString.copyFrom(ByteBuffer.allocate(4).putInt(x + y))
 
-    driver.sendStatusUpdate(TaskStatus.newBuilder
-      .setTaskId(task.getTaskId)
-      .setState(TaskState.TASK_FINISHED)
-      .setData(result)
-      .build())
+        driver.sendStatusUpdate(TaskStatus.newBuilder
+          .setTaskId(task.getTaskId)
+          .setState(TaskState.TASK_FINISHED)
+          .setData(result)
+          .build())
+      }
+    }
+
+    thread.start()
   }
 
   def main(args: Array[String]): Unit = {

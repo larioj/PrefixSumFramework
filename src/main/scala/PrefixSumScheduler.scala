@@ -136,6 +136,6 @@ class PrefixSumScheduler(numbers: Array[Int], executor: ExecutorInfo) extends Sc
   override def registered(driver: SchedulerDriver, frameworkId: FrameworkID, masterInfo: MasterInfo): Unit =
     println(s"registered: Registered with mesos master ${masterInfo.getId} at ip ${masterInfo.getIp} with port ${masterInfo.getPort}")
 
-  override def executorLost(driver: SchedulerDriver, executorId: ExecutorID, slaveId: SlaveID, status: Int): Unit =
-    println(s"executorLost: We lost the executor ${executorId.getValue} at slave ${slaveId.getValue}!!!")
+  override def executorLost(driver: SchedulerDriver, executorId: ExecutorID, slaveId: SlaveID, status: Int): Unit = {}
+    //println(s"executorLost: We lost the executor ${executorId.getValue} at slave ${slaveId.getValue}!!!")
 }
