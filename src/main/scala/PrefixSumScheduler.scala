@@ -1,5 +1,7 @@
+import java.nio.ByteBuffer
 import java.util
 
+import com.google.protobuf.ByteString
 import org.apache.mesos.Protos._
 import org.apache.mesos._
 
@@ -25,13 +27,14 @@ class PrefixSumScheduler(numbers: Array[Int]) extends Scheduler {
   }
 
   private def getTasks(offer: Offer): List[TaskInfo] = {
-    
-    def generateCommand(wi: PrefixSumState#WorkItem): String = "exit $((" + s" ${wi.x} + ${wi.y} ))"
+
+    def generateBytes(wi: PrefixSumState#WorkItem): ByteString = ByteString.copyFrom(ByteBuffer.allocate(8).putInt(0, wi.x).putInt(4, wi.y))
     
     def maxNumTasks(): Int = (getCpuCount(offer) / _cpuPerTask).toInt
     
     def generateTask(wi: PrefixSumState#WorkItem, offer: Offer): TaskInfo = {
-      val command = CommandInfo.newBuilder.setValue(generateCommand(wi)).build()
+
+      val executor = ExecutorInfo
       val id = TaskID.newBuilder.setValue("task" + System.currentTimeMillis() + "-" + wi.id)
       val name = s"SleepTask-${id.getValue}"
       val slaveId = offer.getSlaveId
@@ -43,9 +46,11 @@ class PrefixSumScheduler(numbers: Array[Int]) extends Scheduler {
         .setName("mem")
         .setType(Value.Type.SCALAR)
         .setScalar(Value.Scalar.newBuilder.setValue(_memPerTask))
+      val data = generateBytes(wi)
 
       val task = TaskInfo.newBuilder
-        .setCommand(command)
+        .setData(data)
+        .setExecutor(executor)
         .setName(name)
         .setTaskId(id)
         .setSlaveId(slaveId)
