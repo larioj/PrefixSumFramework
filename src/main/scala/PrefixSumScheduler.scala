@@ -84,19 +84,15 @@ class PrefixSumScheduler(numbers: Array[Int], executor: ExecutorInfo) extends Sc
   }
 
   override def statusUpdate(driver: SchedulerDriver, status: TaskStatus): Unit = {
-    def parseResult(result: String): Int = {
-      val num = result.substring(result.lastIndexOf(' ') + 1).trim
-      num.toInt
-    }
 
-   if (status.getState == Protos.TaskState.TASK_FAILED || status.getState == Protos.TaskState.TASK_FINISHED) {
+   if (status.getState == Protos.TaskState.TASK_FINISHED) {
       val taskId = status.getTaskId.getValue
       val workId = _workIds.remove(taskId).get
-      val result = parseResult(status.getMessage)
+      val result = status.getData.asReadOnlyByteBuffer.getInt
 
       _sumState.submitResult(workId, result)
     } else {
-      println(s"statusUpdate: Status update: Task ${status.getTaskId.getValue} is in state ${status.getState}, msg: ${status.getMessage}")
+      println(s"statusUpdate: Status update: Task ${status.getTaskId.getValue} is in state ${status.getState}")
     }
 
     if (_sumState.isDone) {
