@@ -7,7 +7,7 @@ import org.apache.mesos.Protos._
 /**
   * Created by mesosphere on 6/29/16.
   */
-class PrefixSumExecutor extends Executor {
+object PrefixSumExecutor extends Executor {
   override def shutdown(driver: ExecutorDriver): Unit = {
     println("Shutdown: starting")
   }
@@ -53,7 +53,7 @@ class PrefixSumExecutor extends Executor {
   }
 
   def main(args: Array[String]): Unit = {
-    val driver = new MesosExecutorDriver(new PrefixSumExecutor)
+    val driver = new MesosExecutorDriver(PrefixSumExecutor)
     driver.run()
   }
 }
