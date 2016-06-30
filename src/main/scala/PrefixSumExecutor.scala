@@ -30,8 +30,8 @@ object PrefixSumExecutor extends Executor {
          |Launch Task: ${task.getTaskId.getValue}
       """.stripMargin)
 
-    val thread = new Thread {
-      override def run(): Unit = {
+    //val thread = new Thread {
+     // override def run(): Unit = {
         driver.sendStatusUpdate(TaskStatus.newBuilder
           .setTaskId(task.getTaskId)
           .setState(TaskState.TASK_RUNNING).build())
@@ -46,10 +46,10 @@ object PrefixSumExecutor extends Executor {
           .setState(TaskState.TASK_FINISHED)
           .setData(result)
           .build())
-      }
-    }
+     // }
+    //}
 
-    thread.start()
+   // thread.start()
   }
 
   def main(args: Array[String]): Unit = {
