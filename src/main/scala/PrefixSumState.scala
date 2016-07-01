@@ -141,6 +141,11 @@ class PrefixSumState(numbers: Array[Int]) {
     updateState(node, result)
   }
 
+  def submitFailure(id: Int): Unit = {
+    val node = _inProgress.remove(id).get
+    _work += node
+  }
+
   def hasWork: Boolean = _work.nonEmpty
 
   def nextWorkItem(): WorkItem = nextWorkItemOption().get

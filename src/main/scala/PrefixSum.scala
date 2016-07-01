@@ -14,7 +14,7 @@ object PrefixSum {
     val id = FrameworkID.newBuilder.setValue(name).build()
 
     val executorCommand = CommandInfo.newBuilder
-      .setValue("java -cp /home/vagrant/PrefixSumFramework/target/scala-2.11/PrefixSumFramework-assembly-1.0.jar PrefixSumExecutor")
+      .setValue("/opt/mesosphere/bin/java -cp /vagrant/PrefixSumFramework-assembly-1.0.jar PrefixSumExecutor")
       .build()
     val executorId = ExecutorID.newBuilder.setValue("PrefixExecutor-" + System.currentTimeMillis())
     val executorName = "Prefix Executor"

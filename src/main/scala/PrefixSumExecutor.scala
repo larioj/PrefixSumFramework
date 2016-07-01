@@ -30,8 +30,8 @@ object PrefixSumExecutor extends Executor {
          |Launch Task: ${task.getTaskId.getValue}
       """.stripMargin)
 
-    val thread = new Thread {
-      override def run(): Unit = {
+//    val thread = new Thread {
+//      override def run(): Unit = {
         driver.sendStatusUpdate(TaskStatus.newBuilder
           .setTaskId(task.getTaskId)
           .setState(TaskState.TASK_RUNNING).build())
@@ -39,17 +39,19 @@ object PrefixSumExecutor extends Executor {
         val data: ByteString = task.getData
         val x = data.asReadOnlyByteBuffer().getInt(0)
         val y = data.asReadOnlyByteBuffer().getInt(4)
-        val result = ByteString.copyFrom(ByteBuffer.allocate(4).putInt(x + y))
+
+        val result = ByteString.copyFrom(ByteBuffer.allocate(4).putInt(0, x + y))
+        println(s"summing $x and $y with result $result")
 
         driver.sendStatusUpdate(TaskStatus.newBuilder
           .setTaskId(task.getTaskId)
           .setState(TaskState.TASK_FINISHED)
           .setData(result)
           .build())
-      }
-    }
-
-   thread.start()
+//      }
+//    }
+//
+//   thread.start()
   }
 
   def main(args: Array[String]): Unit = {

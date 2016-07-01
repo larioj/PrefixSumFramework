@@ -13,8 +13,8 @@ import scala.collection.mutable
   */
 class PrefixSumScheduler(numbers: Array[Int], executor: ExecutorInfo) extends Scheduler {
 
-  private val _cpuPerTask = 1.0
-  private val _memPerTask = 1024.0
+  private val _cpuPerTask = 0.1
+  private val _memPerTask = 128.0
   private val _sumState = PrefixSumState(numbers)
   private val _workIds = mutable.Map[String, Int]()
 
@@ -29,9 +29,9 @@ class PrefixSumScheduler(numbers: Array[Int], executor: ExecutorInfo) extends Sc
   private def getTasks(offer: Offer): List[TaskInfo] = {
 
     def generateBytes(wi: PrefixSumState#WorkItem): ByteString = ByteString.copyFrom(ByteBuffer.allocate(8).putInt(0, wi.x).putInt(4, wi.y))
-    
+
     def maxNumTasks(): Int = (getCpuCount(offer) / _cpuPerTask).toInt
-    
+
     def generateTask(wi: PrefixSumState#WorkItem, offer: Offer): TaskInfo = {
 
       val id = TaskID.newBuilder.setValue("task" + System.currentTimeMillis() + "-" + wi.id)
@@ -61,9 +61,9 @@ class PrefixSumScheduler(numbers: Array[Int], executor: ExecutorInfo) extends Sc
 
       task
     }
-    
+
     def workItems = (1 to maxNumTasks()).map(_ => _sumState.nextWorkItemOption()).filter(_.isDefined)
-    
+
     workItems.map(wi => generateTask(wi.get, offer)).toList
   }
 
@@ -76,7 +76,7 @@ class PrefixSumScheduler(numbers: Array[Int], executor: ExecutorInfo) extends Sc
         val tasks = getTasks(offer)
         println(s"\t launching ${tasks.length} tasks on ${getCpuCount(offer)} cpu")
         driver.launchTasks(List(offer.getId).asJava, tasks.asJava)
-      } else  {
+      } else {
         println(s"\t no work available")
         driver.declineOffer(offer.getId)
       }
@@ -84,13 +84,18 @@ class PrefixSumScheduler(numbers: Array[Int], executor: ExecutorInfo) extends Sc
   }
 
   override def statusUpdate(driver: SchedulerDriver, status: TaskStatus): Unit = {
-
-   if (status.getState == Protos.TaskState.TASK_FINISHED) {
+    if (status.getState == Protos.TaskState.TASK_FINISHED) {
       val taskId = status.getTaskId.getValue
       val workId = _workIds.remove(taskId).get
+      println(status.getData + " " + status.getState + " " + status.getTaskId.getValue)
       val result = status.getData.asReadOnlyByteBuffer.getInt
-
       _sumState.submitResult(workId, result)
+    } else if (status.getState == Protos.TaskState.TASK_ERROR || status.getState == Protos.TaskState.TASK_LOST) {
+      val taskId = status.getTaskId.getValue
+      val workId = _workIds.remove(taskId).get
+      println(s"statusUpdate: Status update: Task ${status.getTaskId.getValue} is in state ${status.getState}")
+      println("\twill resubmit work item")
+      _sumState.submitFailure(workId)
     } else {
       println(s"statusUpdate: Status update: Task ${status.getTaskId.getValue} is in state ${status.getState}")
     }
@@ -98,12 +103,12 @@ class PrefixSumScheduler(numbers: Array[Int], executor: ExecutorInfo) extends Sc
     if (_sumState.isDone) {
       println(
         s"""
-          |Done!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          |.............................................................................................................
-          |
+           |Done!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+           |.............................................................................................................
+           |
           |
           |${_sumState.getResult.toList}
-          |
+           |
           |
         """.stripMargin)
 
@@ -114,8 +119,8 @@ class PrefixSumScheduler(numbers: Array[Int], executor: ExecutorInfo) extends Sc
   override def offerRescinded(driver: SchedulerDriver, offerId: OfferID): Unit =
     println(s"offerRecinded: Offer ${offerId.getValue} has been rescinded")
 
-  override def disconnected(driver: SchedulerDriver): Unit = {}
-  println("disconnected: Disconnected from the mesos master")
+  override def disconnected(driver: SchedulerDriver): Unit =
+    println("disconnected: Disconnected from the mesos master")
 
   override def reregistered(driver: SchedulerDriver, masterInfo: MasterInfo): Unit =
     println("reregistered: Reregistered with the mesos master")
@@ -133,5 +138,6 @@ class PrefixSumScheduler(numbers: Array[Int], executor: ExecutorInfo) extends Sc
     println(s"registered: Registered with mesos master ${masterInfo.getId} at ip ${masterInfo.getIp} with port ${masterInfo.getPort}")
 
   override def executorLost(driver: SchedulerDriver, executorId: ExecutorID, slaveId: SlaveID, status: Int): Unit = {}
-    //println(s"executorLost: We lost the executor ${executorId.getValue} at slave ${slaveId.getValue}!!!")
+
+  //println(s"executorLost: We lost the executor ${executorId.getValue} at slave ${slaveId.getValue}!!!")
 }
