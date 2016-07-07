@@ -48,14 +48,14 @@ mapping is fairly simple.
 
 * Follow the instructions to install the vagrant environment [here](https://github.com/dcos/dcos-vagrant)
 	* Use the 1.7 configuration
-	* Deploy with ```bash vagrant up m1 a1 p1 boot ```
+	* Deploy with ``` vagrant up m1 a1 p1 boot ```
 	* The dcos-vagrant cloned directory will be mounted on all the machines at /vagrant
 * Clone this repository
-* Create a jar of the project with ```bash sbt assembly ```
+* Create a jar of the project with ``` sbt assembly ```
 	* The jar will be created in ``` target/scala-2.11/PrefixSumFramework-assembly-1.0.jar ```
 * Move the jar to the vagrant-dcos directory
-* ssh into m1 with ```bash vagrant ssh m1 ```
-* Run the scheduler ```bash java -cp /vagrant/<jar-name> PrefixSum
+* ssh into m1 with ``` vagrant ssh m1 ```
+* Run the scheduler ``` java -cp /vagrant/<jar-name> PrefixSum
 * Watch as it does cool things 
 
 ## Recommended Reading
