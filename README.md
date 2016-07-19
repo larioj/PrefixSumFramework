@@ -55,7 +55,7 @@ mapping is fairly simple.
 	* The jar will be created in ``` target/scala-2.11/PrefixSumFramework-assembly-1.0.jar ```
 * Move the jar to the vagrant-dcos directory
 * ssh into m1 with ``` vagrant ssh m1 ```
-* Run the scheduler ``` java -cp /vagrant/<jar-name> PrefixSum
+* Run the scheduler ``` java -cp /vagrant/<jar-name> PrefixSum ```
 * Watch as it does cool things 
 
 ## Recommended Reading
